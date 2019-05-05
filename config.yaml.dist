@@ -1,0 +1,10 @@
+# name of the ipset set to manage
+setName: blacklist
+
+# an optional list of subnets for which
+# entries from the blacklist are ignored;
+# useful to prevent someone from accidentally
+# blocking internal networks
+protected:
+- 192.168.0.0/16
+- 127.0.0.0/8

@@ -55,7 +55,7 @@ func main() {
 	active := list.Active(time.Now())
 	logger.Debugf("List contains %d total entries, %d of which are active.", len(list), len(active))
 
-	filtered := list.RemoveCollisions(config.WhitelistIPs())
+	filtered := active.RemoveCollisions(config.WhitelistIPs())
 	logger.Debugf("List contains %d entries after removing whitelisted entries.", len(filtered))
 
 	logger.Debugln("Building ipset client…")

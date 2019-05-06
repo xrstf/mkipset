@@ -6,6 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"strings"
+	"time"
+
+	"github.com/xrstf/mkipset/pkg/ip"
 )
 
 type execIpset struct {
@@ -16,8 +20,8 @@ func NewExec() (*execIpset, error) {
 }
 
 func (e *execIpset) Create(setname string, t SetType) error {
-	if !validateSetname(setname) {
-		return fmt.Errorf("invalid set name: '%s'", setname)
+	if err := validateSetname(setname); err != nil {
+		return fmt.Errorf("invalid set name: %v", err)
 	}
 
 	_, err := e.run([]string{"create", setname, string(t), "-exist"})
@@ -29,8 +33,8 @@ func (e *execIpset) Create(setname string, t SetType) error {
 }
 
 func (e *execIpset) Add(setname string, entry string) error {
-	if !validateSetname(setname) {
-		return fmt.Errorf("invalid set name: '%s'", setname)
+	if err := validateSetname(setname); err != nil {
+		return fmt.Errorf("invalid set name: %v", err)
 	}
 
 	if len(entry) == 0 {
@@ -46,8 +50,8 @@ func (e *execIpset) Add(setname string, entry string) error {
 }
 
 func (e *execIpset) Delete(setname string, entry string) error {
-	if !validateSetname(setname) {
-		return fmt.Errorf("invalid set name: '%s'", setname)
+	if err := validateSetname(setname); err != nil {
+		return fmt.Errorf("invalid set name: %v", err)
 	}
 
 	if len(entry) == 0 {
@@ -83,11 +87,11 @@ type ipsetsXML struct {
 }
 
 func (e *execIpset) Show(setname string) (*Set, error) {
-	if !validateSetname(setname) {
-		return nil, fmt.Errorf("invalid set name: '%s'", setname)
+	if err := validateSetname(setname); err != nil {
+		return nil, fmt.Errorf("invalid set n%v '%s'", err)
 	}
 
-	output, err := e.run([]string{"list", setname})
+	output, err := e.run([]string{"list", setname, "-o", "xml"})
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +109,7 @@ func (e *execIpset) Show(setname string) (*Set, error) {
 
 	s := &Set{
 		Name:     ipset.Name,
-		Type:     ipset.Type,
+		Type:     SetType(ipset.Type),
 		Revision: ipset.Revision,
 		Header: SetHeader{
 			Family:      ipset.Header.Family,
@@ -125,12 +129,12 @@ func (e *execIpset) Show(setname string) (*Set, error) {
 }
 
 func (e *execIpset) Swap(oldname string, newname string) error {
-	if !validateSetname(oldname) {
-		return fmt.Errorf("invalid old set name: '%s'", oldname)
+	if err := validateSetname(oldname); err != nil {
+		return fmt.Errorf("invalid old set name: %v", err)
 	}
 
-	if !validateSetname(newname) {
-		return fmt.Errorf("invalid new set name: '%s'", newname)
+	if err := validateSetname(newname); err != nil {
+		return fmt.Errorf("invalid new set name: %v", err)
 	}
 
 	_, err := e.run([]string{"swap", oldname, newname})
@@ -142,13 +146,42 @@ func (e *execIpset) Swap(oldname string, newname string) error {
 }
 
 func (e *execIpset) Destroy(setname string) error {
-	if !validateSetname(setname) {
-		return fmt.Errorf("invalid set name: '%s'", setname)
+	if err := validateSetname(setname); err != nil {
+		return fmt.Errorf("invalid set name: %v", err)
 	}
 
 	_, err := e.run([]string{"destroy", setname})
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (e *execIpset) Synchronize(set Set, ips []ip.IP) error {
+	// remember that names cannot be longer tan 31 characters
+	// and set names in mkipset are allowed to be up to 20 chars
+	tempSetName := fmt.Sprintf("%s_%s", set.Name, time.Now().Format("150405.999"))
+	tempSetName = strings.Replace(tempSetName, ".", "_", -1)
+
+	err := e.Create(tempSetName, set.Type)
+	if err != nil {
+		return fmt.Errorf("failed to create temp set: %v", err)
+	}
+	defer func() {
+		e.Destroy(tempSetName)
+	}()
+
+	for _, ip := range ips {
+		err := e.Add(tempSetName, ip.String())
+		if err != nil {
+			return fmt.Errorf("failed to add %v to temp set: %v", ip, err)
+		}
+	}
+
+	err = e.Swap(set.Name, tempSetName)
+	if err != nil {
+		return fmt.Errorf("failed to enable new temp set: %v", err)
 	}
 
 	return nil

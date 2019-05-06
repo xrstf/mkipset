@@ -6,11 +6,12 @@ import (
 	"os"
 	"time"
 
+	"github.com/xrstf/mkipset/pkg/ip"
 	yaml "gopkg.in/yaml.v2"
 )
 
 type Config struct {
-	Protected     []string      `yaml:"protected"`
+	Whitelist     []string      `yaml:"whitelist"`
 	FlushInterval time.Duration `yaml:"flushInterval"`
 	SetName       string        `yaml:"setName"`
 }
@@ -39,6 +40,16 @@ func (c *Config) Validate() error {
 		return errors.New("no ipset setName configured")
 	}
 
+	if len(c.SetName) > 20 {
+		return errors.New("setNames must be no longer than 20 characters")
+	}
+
+	for i, entry := range c.Whitelist {
+		if _, err := ip.Parse(entry); err != nil {
+			return fmt.Errorf("whitelist item %d is invalid: %v", i+1, err)
+		}
+	}
+
 	if c.FlushInterval == 0 {
 		c.FlushInterval = 60 * time.Second
 	}
@@ -48,4 +59,15 @@ func (c *Config) Validate() error {
 	}
 
 	return nil
+}
+
+func (c *Config) WhitelistIPs() []ip.IP {
+	ips := make([]ip.IP, 0)
+
+	for _, entry := range c.Whitelist {
+		parsed, _ := ip.Parse(entry)
+		ips = append(ips, *parsed)
+	}
+
+	return ips
 }

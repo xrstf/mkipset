@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"github.com/xrstf/mkipset/pkg/ip"
 )
 
 var (
@@ -63,7 +64,7 @@ func LoadTextFile(filename string, logger logrus.FieldLogger) (Entries, error) {
 func parseTextEntry(match []string) (Entry, error) {
 	e := Entry{}
 
-	ip, err := parseIP(match[1])
+	ip, err := ip.Parse(match[1])
 	if err != nil {
 		return e, err
 	}

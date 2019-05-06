@@ -11,7 +11,7 @@ type Interface interface {
 
 type Set struct {
 	Name     string
-	Type     string
+	Type     SetType
 	Revision int
 	Header   SetHeader
 	Members  []string

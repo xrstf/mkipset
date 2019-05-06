@@ -1,6 +1,10 @@
 package iplist
 
-import "time"
+import (
+	"time"
+
+	"github.com/xrstf/mkipset/pkg/ip"
+)
 
 type Entries []Entry
 
@@ -16,8 +20,41 @@ func (e Entries) Active(now time.Time) Entries {
 	return result
 }
 
+func (e Entries) RemoveCollisions(ips []ip.IP) Entries {
+	result := make(Entries, 0)
+
+	for _, entry := range e {
+		conflicts := false
+
+		for _, i := range ips {
+			if i.Collides(entry.IP) {
+				conflicts = true
+				break
+			}
+		}
+
+		if !conflicts {
+			result = append(result, entry)
+		}
+	}
+
+	return result
+}
+
+func (e Entries) IPs() []ip.IP {
+	result := make([]ip.IP, 0)
+
+	for _, entry := range e {
+		if entry.IP != nil {
+			result = append(result, *entry.IP)
+		}
+	}
+
+	return result
+}
+
 type Entry struct {
-	IP     string
+	IP     *ip.IP
 	After  *time.Time
 	Before *time.Time
 }

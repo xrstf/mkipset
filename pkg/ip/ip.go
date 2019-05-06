@@ -38,6 +38,26 @@ func Parse(ip string) (*IP, error) {
 	}, nil
 }
 
-func (t *IP) String() string {
-	return t.input
+func (i *IP) String() string {
+	return i.input
+}
+
+func (i *IP) IsNet() bool {
+	return i.net != nil
+}
+
+func (i *IP) Collides(other *IP) bool {
+	if i.IsNet() {
+		if other.IsNet() {
+			return i.net.Contains(other.net.IP) || other.net.Contains(i.net.IP)
+		} else {
+			return i.net.Contains(other.ip)
+		}
+	} else {
+		if other.IsNet() {
+			return other.net.Contains(i.ip)
+		} else {
+			return i.ip.Equal(other.ip)
+		}
+	}
 }

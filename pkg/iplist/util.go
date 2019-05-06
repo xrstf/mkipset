@@ -2,7 +2,6 @@ package iplist
 
 import (
 	"fmt"
-	"net"
 	"path/filepath"
 	"strings"
 	"time"
@@ -28,20 +27,6 @@ func LoadFile(filename string, logger logrus.FieldLogger) (Entries, error) {
 	default:
 		return nil, fmt.Errorf("unknown file extension '%s'", ext)
 	}
-}
-
-func parseIP(ip string) (string, error) {
-	if strings.Contains(ip, "/") {
-		if _, _, err := net.ParseCIDR(ip); err != nil {
-			return "", err
-		}
-	} else {
-		if result := net.ParseIP(ip); result == nil {
-			return "", fmt.Errorf("invalid IP format: '%s'", ip)
-		}
-	}
-
-	return ip, nil
 }
 
 var timeFormats = []string{

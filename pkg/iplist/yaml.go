@@ -5,6 +5,7 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
+	"github.com/xrstf/mkipset/pkg/ip"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -32,7 +33,7 @@ func LoadYAMLFile(filename string, logger logrus.FieldLogger) (Entries, error) {
 		entry := Entry{}
 		logger = logger.WithField("line", i+1)
 
-		ip, err := parseIP(rawEntry.IP)
+		ip, err := ip.Parse(rawEntry.IP)
 		if err != nil {
 			logger.Warnf("Entry is invalid: %v.", err)
 			continue

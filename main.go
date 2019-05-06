@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -42,8 +41,6 @@ func main() {
 		logger.Fatalf("Failed to load configuration: %v.", err)
 	}
 
-	logger.Printf("config: %v", config)
-
 	listFile := flag.Arg(0)
 	if len(listFile) == 0 {
 		logger.Fatalln("No LIST_FILE argument given.")
@@ -57,6 +54,9 @@ func main() {
 
 	active := list.Active(time.Now())
 	logger.Debugf("List contains %d total entries, %d of which are active.", len(list), len(active))
+
+	filtered := list.RemoveCollisions(config.WhitelistIPs())
+	logger.Debugf("List contains %d entries after removing whitelisted entries.", len(filtered))
 
 	logger.Debugln("Building ipset client…")
 	client, err := ipset.NewExec()
@@ -75,6 +75,12 @@ func main() {
 	if err != nil {
 		logger.Fatalf("Failed to show ipset set: %v.", err)
 	}
+	logger.Debugf("Set contains %d members.", len(set.Members))
 
-	fmt.Println(set)
+	logger.Debugln("Synchronizing ipset…")
+	err = client.Synchronize(*set, filtered.IPs())
+	if err != nil {
+		logger.Fatalf("Failed to synchronize ipset set: %v.", err)
+	}
+	logger.Debugln("Set has been synchronized.")
 }

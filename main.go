@@ -13,12 +13,14 @@ import (
 
 func main() {
 	var (
-		configFile string
-		verbose    bool
-		pretty     bool
+		configFile         string
+		verbose            bool
+		pretty             bool
+		ignoreMissingFiles bool
 	)
 
 	flag.StringVar(&configFile, "config", "", "configuration file to use")
+	flag.BoolVar(&ignoreMissingFiles, "ignore-missing", false, "when given, do not abort on missing blacklist files")
 	flag.BoolVar(&verbose, "verbose", false, "enable more verbose logging")
 	flag.BoolVar(&pretty, "pretty", false, "enable pretty logging output with colors")
 	flag.Parse()
@@ -42,22 +44,41 @@ func main() {
 		logger.Fatalf("Failed to load configuration: %v.", err)
 	}
 
-	listFile := flag.Arg(0)
-	if len(listFile) == 0 {
-		logger.Fatalln("No LIST_FILE argument given.")
+	if flag.NArg() == 0 {
+		logger.Fatalln("No blacklist files given.")
 	}
 
-	logger.Debugf("Loading IP list %s…", listFile)
-	entries, err := blacklist.LoadFile(listFile, logger)
-	if err != nil {
-		logger.Fatalf("Failed to load IP list: %v.", err)
+	var entries blacklist.Entries
+
+	files := 0
+
+	for _, file := range flag.Args() {
+		flogger := logger.WithField("file", file)
+		flogger.Debugln("Loading file…")
+
+		fentries, err := blacklist.LoadFile(file, flogger)
+		if err != nil {
+			if ignoreMissingFiles {
+				flogger.Warnf("Failed to load IP list: %v.", err)
+				continue
+			}
+
+			flogger.Fatalf("Failed to load IP list: %v.", err)
+		}
+
+		entries = entries.Merge(fentries)
+		files++
+	}
+
+	if files == 0 {
+		logger.Fatalln("Could not load any of the given files, refusing to continue.")
 	}
 
 	active := entries.Active(time.Now())
-	logger.Debugf("List contains %d total entries, %d of which are active.", len(entries), len(active))
+	logger.Debugf("Found a total of %d entries, %d of which are active.", len(entries), len(active))
 
 	filtered := active.RemoveCollisions(config.WhitelistIPs())
-	logger.Debugf("List contains %d entries after removing whitelisted entries.", len(filtered))
+	logger.Debugf("Of those, %d entries remained after removing whitelisted elements.", len(filtered))
 
 	logger.Debugln("Building ipset client…")
 	client, err := ipset.NewExec()

@@ -34,7 +34,13 @@ properly so that it can find the `ipset` binary:
     PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
     # update ipsets
-    * * * * * mkipset -config /etc/mkipset/web-config.yaml /etc/mkipset/web-config.txt
+    * * * * * mkipset -config /etc/mkipset/web-config.yaml /etc/mkipset/web-blacklist.txt
+
+You can also feed multiple files into `mkipset`, for example if you want to manage
+blacklist entries on a root level and then also load additional entries defined by
+a user on your system. Use the `-ignore-missing` flag if you don't care if some of
+the blacklist files could not be found, but be aware that you must load at least
+one file successfully no matter what.
 
 And finally create as many iptables rules as you like, referencing your set. In
 this example, the set is named `blacklist-web` because it contains IPs that we want

@@ -42,6 +42,46 @@ func (e Entries) RemoveCollisions(ips ip.Slice) Entries {
 	return result
 }
 
+func (e Entries) Merge(others Entries) Entries {
+	result := e
+
+	for _, other := range others {
+		var existing *Entry
+
+		for idx, self := range e {
+			if self.IP.Equals(*other.IP) {
+				existing = &e[idx]
+				break
+			}
+		}
+
+		if existing == nil {
+			result = append(result, other)
+			continue
+		}
+
+		// compare time stamps
+		// we only ever extend any given time range, assuming that a
+		// disapparing block is the worse outcome of a merge
+
+		existingAfter := existing.After
+		otherAfter := other.After
+
+		if otherAfter == nil || (existingAfter != nil && otherAfter.Before(*existingAfter)) {
+			existing.After = otherAfter
+		}
+
+		existingBefore := existing.Before
+		otherBefore := other.Before
+
+		if otherBefore == nil || (existingBefore != nil && otherBefore.After(*existingBefore)) {
+			existing.Before = otherBefore
+		}
+	}
+
+	return result
+}
+
 func (e Entries) IPs() ip.Slice {
 	result := make(ip.Slice, 0)
 

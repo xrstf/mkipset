@@ -1,6 +1,7 @@
-package iplist
+package blacklist
 
 import (
+	"sort"
 	"time"
 
 	"github.com/xrstf/mkipset/pkg/ip"
@@ -20,7 +21,7 @@ func (e Entries) Active(now time.Time) Entries {
 	return result
 }
 
-func (e Entries) RemoveCollisions(ips []ip.IP) Entries {
+func (e Entries) RemoveCollisions(ips ip.Slice) Entries {
 	result := make(Entries, 0)
 
 	for _, entry := range e {
@@ -41,14 +42,16 @@ func (e Entries) RemoveCollisions(ips []ip.IP) Entries {
 	return result
 }
 
-func (e Entries) IPs() []ip.IP {
-	result := make([]ip.IP, 0)
+func (e Entries) IPs() ip.Slice {
+	result := make(ip.Slice, 0)
 
 	for _, entry := range e {
 		if entry.IP != nil {
 			result = append(result, *entry.IP)
 		}
 	}
+
+	sort.Sort(result)
 
 	return result
 }

@@ -2,11 +2,12 @@ package main
 
 import (
 	"flag"
+	"os"
 	"time"
 
 	"github.com/sirupsen/logrus"
+	"github.com/xrstf/mkipset/pkg/blacklist"
 	"github.com/xrstf/mkipset/pkg/config"
-	"github.com/xrstf/mkipset/pkg/iplist"
 	"github.com/xrstf/mkipset/pkg/ipset"
 )
 
@@ -47,13 +48,13 @@ func main() {
 	}
 
 	logger.Debugf("Loading IP list %s…", listFile)
-	list, err := iplist.LoadFile(listFile, logger)
+	entries, err := blacklist.LoadFile(listFile, logger)
 	if err != nil {
 		logger.Fatalf("Failed to load IP list: %v.", err)
 	}
 
-	active := list.Active(time.Now())
-	logger.Debugf("List contains %d total entries, %d of which are active.", len(list), len(active))
+	active := entries.Active(time.Now())
+	logger.Debugf("List contains %d total entries, %d of which are active.", len(entries), len(active))
 
 	filtered := active.RemoveCollisions(config.WhitelistIPs())
 	logger.Debugf("List contains %d entries after removing whitelisted entries.", len(filtered))
@@ -77,8 +78,15 @@ func main() {
 	}
 	logger.Debugf("Set contains %d members.", len(set.Members))
 
+	ipsToBlacklist := filtered.IPs()
+
+	if set.MembersEquals(ipsToBlacklist) {
+		logger.Debugln("Blacklist equals current set members, nothing to do.")
+		os.Exit(0)
+	}
+
 	logger.Debugln("Synchronizing ipset…")
-	err = client.Synchronize(*set, filtered.IPs())
+	err = client.Synchronize(*set, ipsToBlacklist)
 	if err != nil {
 		logger.Fatalf("Failed to synchronize ipset set: %v.", err)
 	}

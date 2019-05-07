@@ -1,4 +1,4 @@
-package iplist
+package blacklist
 
 import (
 	"bufio"

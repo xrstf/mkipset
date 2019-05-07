@@ -61,13 +61,13 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) WhitelistIPs() []ip.IP {
-	ips := make([]ip.IP, 0)
+func (c *Config) WhitelistIPs() ip.Slice {
+	set := ip.NewSet()
 
 	for _, entry := range c.Whitelist {
 		parsed, _ := ip.Parse(entry)
-		ips = append(ips, *parsed)
+		set.Add(*parsed)
 	}
 
-	return ips
+	return set.Sorted()
 }

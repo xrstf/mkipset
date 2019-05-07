@@ -1,21 +1,21 @@
-package iplist
+package blacklist
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
 	"github.com/sirupsen/logrus"
 	"github.com/xrstf/mkipset/pkg/ip"
-	yaml "gopkg.in/yaml.v2"
 )
 
-type yamlEntry struct {
-	IP     string `yaml:"ip"`
-	After  string `yaml:"after"`
-	Before string `yaml:"before"`
+type jsonEntry struct {
+	IP     string `json:"ip"`
+	After  string `json:"after"`
+	Before string `json:"before"`
 }
 
-func LoadYAMLFile(filename string, logger logrus.FieldLogger) (Entries, error) {
+func LoadJSONFile(filename string, logger logrus.FieldLogger) (Entries, error) {
 	entries := make(Entries, 0)
 
 	f, err := os.Open(filename)
@@ -24,9 +24,9 @@ func LoadYAMLFile(filename string, logger logrus.FieldLogger) (Entries, error) {
 	}
 	defer f.Close()
 
-	rawEntries := make([]yamlEntry, 0)
-	if err := yaml.NewDecoder(f).Decode(&rawEntries); err != nil {
-		return entries, fmt.Errorf("failed to parse YAML: %v", err)
+	rawEntries := make([]jsonEntry, 0)
+	if err := json.NewDecoder(f).Decode(&rawEntries); err != nil {
+		return entries, fmt.Errorf("failed to parse JSON: %v", err)
 	}
 
 	for i, rawEntry := range rawEntries {

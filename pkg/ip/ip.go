@@ -46,6 +46,10 @@ func (i *IP) IsNet() bool {
 	return i.net != nil
 }
 
+func (i *IP) Equals(other IP) bool {
+	return i.String() == other.String()
+}
+
 func (i *IP) Collides(other *IP) bool {
 	if i.IsNet() {
 		if other.IsNet() {

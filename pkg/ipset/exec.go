@@ -158,7 +158,7 @@ func (e *execIpset) Destroy(setname string) error {
 	return nil
 }
 
-func (e *execIpset) Synchronize(set Set, ips []ip.IP) error {
+func (e *execIpset) Synchronize(set Set, ips ip.Slice) error {
 	// remember that names cannot be longer tan 31 characters
 	// and set names in mkipset are allowed to be up to 20 chars
 	tempSetName := fmt.Sprintf("%s_%s", set.Name, time.Now().Format("150405.999"))

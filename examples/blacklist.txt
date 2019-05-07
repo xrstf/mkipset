@@ -1,0 +1,7 @@
+# I am a comment. Empty lines are ignored as well.
+
+1.2.3.4
+192.168.0.0/16
+8.8.8.8 from 2019-05-05
+8.8.8.8 to 2020-04
+8.8.8.8 to 2019-05-05T12:34:56 starts 2019-05-06T12:34:56

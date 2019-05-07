@@ -36,18 +36,31 @@ properly so that it can find the `ipset` binary:
     # update ipsets
     * * * * * mkipset -config /etc/mkipset/web-config.yaml /etc/mkipset/web-blacklist.txt
 
-You can also feed multiple files into `mkipset`, for example if you want to manage
-blacklist entries on a root level and then also load additional entries defined by
-a user on your system. Use the `-ignore-missing` flag if you don't care if some of
-the blacklist files could not be found, but be aware that you must load at least
-one file successfully no matter what.
-
 And finally create as many iptables rules as you like, referencing your set. In
 this example, the set is named `blacklist-web` because it contains IPs that we want
 to deny HTTP/HTTPS access to.
 
     iptables -A INPUT -p tcp --dport 80  -m set --match-set blacklist-web src -j DROP
     iptables -A INPUT -p tcp --dport 443 -m set --match-set blacklist-web src -j DROP
+
+## Tips
+
+You can feed multiple files into `mkipset`, for example if you want to manage
+blacklist entries on a root level and then also load additional entries defined by
+a user on your system. Use the `-ignore-missing` flag if you don't care if some of
+the blacklist files could not be found, but be aware that you must load at least
+one file successfully no matter what.
+
+If you manage multiple ipset sets, it can be helpful to have a single configuration
+file instead of one per set. To do so, use the `-set-name` parameter to override the
+set you defined in your configuration file. A crontab could then look like this:
+
+    PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+    # update ipsets
+    * * * * * mkipset -config /etc/mkipset/config.yaml -set-name web /etc/mkipset/web-blacklist.txt
+    * * * * * mkipset -config /etc/mkipset/config.yaml -set-name ssh /etc/mkipset/ssh-blacklist.txt
+    * * * * * mkipset -config /etc/mkipset/config.yaml -set-name mail /etc/mkipset/mail-blacklist.txt
 
 ## License
 

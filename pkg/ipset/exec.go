@@ -20,7 +20,7 @@ func NewExec() (*execIpset, error) {
 }
 
 func (e *execIpset) Create(setname string, t SetType) error {
-	if err := validateSetname(setname); err != nil {
+	if err := ValidateSetName(setname); err != nil {
 		return fmt.Errorf("invalid set name: %v", err)
 	}
 
@@ -33,7 +33,7 @@ func (e *execIpset) Create(setname string, t SetType) error {
 }
 
 func (e *execIpset) Add(setname string, entry string) error {
-	if err := validateSetname(setname); err != nil {
+	if err := ValidateSetName(setname); err != nil {
 		return fmt.Errorf("invalid set name: %v", err)
 	}
 
@@ -50,7 +50,7 @@ func (e *execIpset) Add(setname string, entry string) error {
 }
 
 func (e *execIpset) Delete(setname string, entry string) error {
-	if err := validateSetname(setname); err != nil {
+	if err := ValidateSetName(setname); err != nil {
 		return fmt.Errorf("invalid set name: %v", err)
 	}
 
@@ -87,7 +87,7 @@ type ipsetsXML struct {
 }
 
 func (e *execIpset) Show(setname string) (*Set, error) {
-	if err := validateSetname(setname); err != nil {
+	if err := ValidateSetName(setname); err != nil {
 		return nil, fmt.Errorf("invalid set n%v '%s'", err)
 	}
 
@@ -129,11 +129,11 @@ func (e *execIpset) Show(setname string) (*Set, error) {
 }
 
 func (e *execIpset) Swap(oldname string, newname string) error {
-	if err := validateSetname(oldname); err != nil {
+	if err := ValidateSetName(oldname); err != nil {
 		return fmt.Errorf("invalid old set name: %v", err)
 	}
 
-	if err := validateSetname(newname); err != nil {
+	if err := ValidateSetName(newname); err != nil {
 		return fmt.Errorf("invalid new set name: %v", err)
 	}
 
@@ -146,7 +146,7 @@ func (e *execIpset) Swap(oldname string, newname string) error {
 }
 
 func (e *execIpset) Destroy(setname string) error {
-	if err := validateSetname(setname); err != nil {
+	if err := ValidateSetName(setname); err != nil {
 		return fmt.Errorf("invalid set name: %v", err)
 	}
 

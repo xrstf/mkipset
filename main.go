@@ -14,12 +14,14 @@ import (
 func main() {
 	var (
 		configFile         string
+		setName            string
 		verbose            bool
 		pretty             bool
 		ignoreMissingFiles bool
 	)
 
 	flag.StringVar(&configFile, "config", "", "configuration file to use")
+	flag.StringVar(&setName, "set-name", "", "override setName from the configuration file")
 	flag.BoolVar(&ignoreMissingFiles, "ignore-missing", false, "when given, do not abort on missing blacklist files")
 	flag.BoolVar(&verbose, "verbose", false, "enable more verbose logging")
 	flag.BoolVar(&pretty, "pretty", false, "enable pretty logging output with colors")
@@ -42,6 +44,14 @@ func main() {
 	config, err := config.LoadFromFile(configFile)
 	if err != nil {
 		logger.Fatalf("Failed to load configuration: %v.", err)
+	}
+
+	if len(setName) > 0 {
+		config.SetName = setName
+	}
+
+	if err := config.Validate(); err != nil {
+		logger.Fatalf("Configuration is invalid: %v.", err)
 	}
 
 	if flag.NArg() == 0 {

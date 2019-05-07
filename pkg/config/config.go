@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/xrstf/mkipset/pkg/ip"
+	"github.com/xrstf/mkipset/pkg/ipset"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -28,20 +29,20 @@ func LoadFromFile(filename string) (*Config, error) {
 		return nil, fmt.Errorf("failed to decode YAML: %v", err)
 	}
 
-	if err = conf.Validate(); err != nil {
-		return nil, fmt.Errorf("invalid configuration: %v", err)
-	}
-
 	return conf, nil
 }
 
 func (c *Config) Validate() error {
 	if len(c.SetName) == 0 {
-		return errors.New("no ipset setName configured")
+		return errors.New("no ipset set name configured")
 	}
 
 	if len(c.SetName) > 20 {
-		return errors.New("setNames must be no longer than 20 characters")
+		return errors.New("set names must be no longer than 20 characters")
+	}
+
+	if err := ipset.ValidateSetName(c.SetName); err != nil {
+		return err
 	}
 
 	for i, entry := range c.Whitelist {

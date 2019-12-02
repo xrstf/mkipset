@@ -27,7 +27,7 @@ func (s Slice) Less(i, j int) bool {
 		return aV4 // i<j if the left side is IPv4
 	}
 
-	if a.net == nil && b.net == nil {
+	if a.net == nil || b.net == nil {
 		return bytes.Compare(a.ip, b.ip) == -1
 	}
 

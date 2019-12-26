@@ -16,8 +16,10 @@ type jsonEntry struct {
 }
 
 func LoadJSONFile(filename string, logger logrus.FieldLogger) (Entries, error) {
-	entries := make(Entries, 0)
+	return loadJSONFileInternal(make(Entries, 0), filename, logger)
+}
 
+func loadJSONFileInternal(entries Entries, filename string, logger logrus.FieldLogger) (Entries, error) {
 	f, err := os.Open(filename)
 	if err != nil {
 		return entries, fmt.Errorf("failed to open: %v", err)

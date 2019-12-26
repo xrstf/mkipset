@@ -9,20 +9,31 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func LoadFile(filename string, logger logrus.FieldLogger) (Entries, error) {
+func LoadFile(filename string, logger logrus.FieldLogger, allowIncludes bool) (Entries, error) {
+	maxIncludes := 0
+	if allowIncludes {
+		maxIncludes = 100 // meticulously chosen by Skandinavian virgins
+	}
+
+	entries := make(Entries, 0)
+
+	return loadFileInternal(entries, filename, logger, &maxIncludes)
+}
+
+func loadFileInternal(entries Entries, filename string, logger logrus.FieldLogger, remainingIncludes *int) (Entries, error) {
 	ext := strings.ToLower(filepath.Ext(filename))
 
 	switch ext {
 	case ".yaml":
 		fallthrough
 	case ".yml":
-		return LoadYAMLFile(filename, logger)
+		return loadYAMLFileInternal(entries, filename, logger)
 
 	case ".json":
-		return LoadJSONFile(filename, logger)
+		return loadJSONFileInternal(entries, filename, logger)
 
 	case ".txt":
-		return LoadTextFile(filename, logger)
+		return loadTextFileInternal(entries, filename, logger, remainingIncludes)
 
 	default:
 		return nil, fmt.Errorf("unknown file extension '%s'", ext)

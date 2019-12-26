@@ -45,6 +45,8 @@ to deny HTTP/HTTPS access to.
 
 ## Tips
 
+### Multiple Files
+
 You can feed multiple files into `mkipset`, for example if you want to manage
 blacklist entries on a root level and then also load additional entries defined by
 a user on your system. Use the `-ignore-missing` flag if you don't care if some of
@@ -61,6 +63,25 @@ set you defined in your configuration file. A crontab could then look like this:
     * * * * * mkipset -config /etc/mkipset/config.yaml -set-name web /etc/mkipset/web-blacklist.txt
     * * * * * mkipset -config /etc/mkipset/config.yaml -set-name ssh /etc/mkipset/ssh-blacklist.txt
     * * * * * mkipset -config /etc/mkipset/config.yaml -set-name mail /etc/mkipset/mail-blacklist.txt
+
+### Including Files
+
+In case you don't know beforehand which files you need, you can also just give `mkipset`
+a base **text** file and include others from there. Every line in a text file that begins
+with `include ` will trigger a recursive include, like so:
+
+    # this is a.txt
+
+    1.2.3.4
+    include b.json
+
+As you can see, you can include all supported file types, but include directives can only
+appear in text files (assuming text files are written manually and JSON/YAML are managed
+by other tools, so these other tools should handle inclusions).
+
+Note that there is a **hardcoded limit of 100 includes** per input file (so if you run
+`mkipset a.txt b.txt`, both files would get an allowance of 100 includes). This is just to
+prevent accidental include loops.
 
 ## License
 

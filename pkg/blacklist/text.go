@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -13,14 +14,31 @@ import (
 )
 
 var (
-	textLineRegex = regexp.MustCompile(`^([^ ]+)(\s+(.+))?$`)
-	afterRegex    = regexp.MustCompile(`after|begins?|since|from|starts?`)
-	beforeRegex   = regexp.MustCompile(`before|until|to|ends?`)
-	specRegex     = regexp.MustCompile(`([a-z]+)\s+([^ ]+)`)
+	includeLineRegex = regexp.MustCompile(`^include (.+)$`)
+	textLineRegex    = regexp.MustCompile(`^([^ ]+)(\s+(.+))?$`)
+	afterRegex       = regexp.MustCompile(`after|begins?|since|from|starts?`)
+	beforeRegex      = regexp.MustCompile(`before|until|to|ends?`)
+	specRegex        = regexp.MustCompile(`([a-z]+)\s+([^ ]+)`)
 )
 
-func LoadTextFile(filename string, logger logrus.FieldLogger) (Entries, error) {
-	entries := make(Entries, 0)
+func LoadTextFile(filename string, logger logrus.FieldLogger, allowIncludes bool) (Entries, error) {
+	maxIncludes := 0
+	if allowIncludes {
+		maxIncludes = 100 // meticulously chosen by Skandinavian virgins
+	}
+
+	return loadTextFileInternal(make(Entries, 0), filename, logger, &maxIncludes)
+}
+
+func loadTextFileInternal(entries Entries, filename string, logger logrus.FieldLogger, remainingIncludes *int) (Entries, error) {
+	if *remainingIncludes < 0 {
+		return entries, errors.New("include directives were nested too deep or ended up in a loop, giving up")
+	}
+
+	absFilename, err := filepath.Abs(filename)
+	if err != nil {
+		return entries, fmt.Errorf("cannot determine absolute file path for %s: %v", absFilename, err)
+	}
 
 	f, err := os.Open(filename)
 	if err != nil {
@@ -39,7 +57,24 @@ func LoadTextFile(filename string, logger logrus.FieldLogger) (Entries, error) {
 			continue
 		}
 
-		match := textLineRegex.FindStringSubmatch(line)
+		match := includeLineRegex.FindStringSubmatch(line)
+		if match != nil {
+			*remainingIncludes--
+
+			rel, err := filepath.Abs(filepath.Join(filepath.Dir(absFilename), match[1]))
+			if err != nil {
+				return entries, fmt.Errorf("failed to construct file path for include directive '%s': %v", match[1], err)
+			}
+
+			entries, err = loadFileInternal(entries, rel, logger, remainingIncludes)
+			if err != nil {
+				return entries, fmt.Errorf("failed to include %s: %v", rel, err)
+			}
+
+			continue
+		}
+
+		match = textLineRegex.FindStringSubmatch(line)
 		if match == nil {
 			logger.Warnln("Line is invalid, no IP/CIDR found.")
 			continue

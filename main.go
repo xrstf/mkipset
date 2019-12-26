@@ -15,6 +15,7 @@ func main() {
 	var (
 		configFile         string
 		setName            string
+		allowIncludes      bool
 		verbose            bool
 		pretty             bool
 		ignoreMissingFiles bool
@@ -25,6 +26,7 @@ func main() {
 	flag.BoolVar(&ignoreMissingFiles, "ignore-missing", false, "when given, do not abort on missing blacklist files")
 	flag.BoolVar(&verbose, "verbose", false, "enable more verbose logging")
 	flag.BoolVar(&pretty, "pretty", false, "enable pretty logging output with colors")
+	flag.BoolVar(&allowIncludes, "allow-includes", false, "whether to enable including text files in other text files")
 	flag.Parse()
 
 	logger := logrus.New()
@@ -66,7 +68,7 @@ func main() {
 		flogger := logger.WithField("file", file)
 		flogger.Debugln("Loading file…")
 
-		fentries, err := blacklist.LoadFile(file, flogger)
+		fentries, err := blacklist.LoadFile(file, flogger, allowIncludes)
 		if err != nil {
 			if ignoreMissingFiles {
 				flogger.Warnf("Failed to load IP list: %v.", err)

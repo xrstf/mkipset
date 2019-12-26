@@ -5,3 +5,8 @@
 8.8.8.8 from 2019-05-05
 8.8.8.8 to 2020-04
 8.8.8.8 to 2019-05-05T12:34:56 starts 2019-05-06T12:34:56
+
+# text files (and only text files) can include other
+# supported file formats
+include ddos.json
+include gdpr.yaml
